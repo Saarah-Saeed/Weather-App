@@ -1,26 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weather App</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nimbus — Weather</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
-  <div class="container">
-    <h1>🌦 Weather App</h1>
-    <div class="search-box">
-      <input type="text" id="cityInput" placeholder="Enter city name">
-      <button onclick="getWeather()">Search</button>
+ 
+  <!-- Animated background canvas -->
+  <canvas id="bgCanvas"></canvas>
+ 
+  <!-- Floating particles -->
+  <div class="particles" id="particles"></div>
+ 
+  <div class="app-wrapper">
+ 
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-icon">☁</span>
+        <span class="logo-text">Nimbus</span>
+      </div>
+      <div class="header-right">
+        <button class="unit-toggle" id="unitToggle" title="Toggle °C / °F">
+          <span id="unitLabel">°C</span>
+        </button>
+        <button class="theme-btn" id="themeBtn" title="Toggle theme">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+      </div>
+    </header>
+ 
+    <!-- Search -->
+    <section class="search-section">
+      <h1 class="headline">What's the<br/><em>weather like?</em></h1>
+      <div class="search-bar" id="searchBar">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input
+          type="text"
+          id="cityInput"
+          placeholder="Search city…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="search-btn" id="searchBtn" onclick="getWeather()">
+          <span>Go</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+      <!-- Autocomplete dropdown -->
+      <ul class="suggestions" id="suggestions"></ul>
+ 
+      <!-- Quick cities -->
+      <div class="quick-cities">
+        <span class="quick-label">Quick:</span>
+        <button class="pill" onclick="quickSearch('New York')">New York</button>
+        <button class="pill" onclick="quickSearch('London')">London</button>
+        <button class="pill" onclick="quickSearch('Tokyo')">Tokyo</button>
+        <button class="pill" onclick="quickSearch('Mumbai')">Mumbai</button>
+        <button class="pill" onclick="useMyLocation()">
+          <i class="fa-solid fa-location-dot"></i> My Location
+        </button>
+      </div>
+    </section>
+ 
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loader-ring">
+        <div></div><div></div><div></div><div></div>
+      </div>
+      <p class="loading-text">Fetching weather…</p>
     </div>
-
-    <div class="weather-card" id="result">
-      <p>Enter a city to see weather 🌍</p>
+ 
+    <!-- Main weather card -->
+    <section class="weather-card hidden" id="weatherCard">
+ 
+      <!-- Top row: city + date -->
+      <div class="card-top">
+        <div>
+          <h2 class="city-name" id="cityName">—</h2>
+          <p class="city-meta" id="cityMeta">—</p>
+        </div>
+        <div class="card-top-right">
+          <p class="live-time" id="liveTime">—</p>
+          <p class="live-date" id="liveDate">—</p>
+        </div>
+      </div>
+ 
+      <!-- Primary stat -->
+      <div class="primary-stat">
+        <div class="weather-icon-big" id="weatherIconBig">🌤</div>
+        <div class="temp-block">
+          <span class="temp-value" id="tempValue">—</span>
+          <span class="temp-unit" id="tempUnit">°C</span>
+        </div>
+        <p class="condition-text" id="conditionText">—</p>
+        <p class="feels-like" id="feelsLike">Feels like —</p>
+      </div>
+ 
+      <!-- Detail grid -->
+      <div class="details-grid">
+        <div class="detail-item" data-label="Humidity">
+          <i class="fa-solid fa-droplet detail-icon"></i>
+          <span class="detail-value" id="humidity">—</span>
+          <span class="detail-unit">%</span>
+        </div>
+        <div class="detail-item" data-label="Wind">
+          <i class="fa-solid fa-wind detail-icon"></i>
+          <span class="detail-value" id="wind">—</span>
+          <span class="detail-unit">km/h</span>
+        </div>
+        <div class="detail-item" data-label="Visibility">
+          <i class="fa-solid fa-eye detail-icon"></i>
+          <span class="detail-value" id="visibility">—</span>
+          <span class="detail-unit">km</span>
+        </div>
+        <div class="detail-item" data-label="Pressure">
+          <i class="fa-solid fa-gauge detail-icon"></i>
+          <span class="detail-value" id="pressure">—</span>
+          <span class="detail-unit">hPa</span>
+        </div>
+        <div class="detail-item" data-label="Sunrise">
+          <i class="fa-solid fa-sun detail-icon"></i>
+          <span class="detail-value" id="sunrise">—</span>
+          <span class="detail-unit"></span>
+        </div>
+        <div class="detail-item" data-label="Sunset">
+          <i class="fa-solid fa-moon detail-icon"></i>
+          <span class="detail-value" id="sunset">—</span>
+          <span class="detail-unit"></span>
+        </div>
+      </div>
+ 
+      <!-- 5-day forecast -->
+      <div class="forecast-section">
+        <h3 class="section-title">5-Day Forecast</h3>
+        <div class="forecast-row" id="forecastRow">
+          <!-- filled by JS -->
+        </div>
+      </div>
+ 
+      <!-- Hourly forecast -->
+      <div class="forecast-section">
+        <h3 class="section-title">Hourly</h3>
+        <div class="hourly-row" id="hourlyRow">
+          <!-- filled by JS -->
+        </div>
+      </div>
+ 
+    </section>
+ 
+    <!-- Error banner -->
+    <div class="error-banner hidden" id="errorBanner">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span id="errorText">City not found.</span>
     </div>
-  </div>
-
+ 
+    <!-- Recent searches -->
+    <div class="recent-section hidden" id="recentSection">
+      <h3 class="section-title small">Recent</h3>
+      <div class="recent-chips" id="recentChips"></div>
+    </div>
+ 
+  </div><!-- .app-wrapper -->
+ 
   <script src="script.js"></script>
 </body>
 </html>
